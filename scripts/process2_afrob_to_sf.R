@@ -10,12 +10,12 @@ load(here::here("processed", "afrob_merge.Rdata"))
 afrob_merge <-
   afrob_merge %>% 
   rename(date = ymd) %>% 
-  select(country, date, everything())
+  dplyr::select(country, date, everything())
 
 
 ### Location ###
 joined1 <- get_africa(level = 1) %>% 
-  select(NAME_0, NAME_1, HASC_1)
+  dplyr::select(NAME_0, NAME_1, HASC_1)
 
 # Convert to sf
 proj <- sf::st_crs(joined1)
@@ -28,9 +28,20 @@ afrob_merge <- afrob_merge %>%
 
 # Match to ADM1s
 afrob_merge_sf <- st_join(afrob_merge, joined1) %>% 
-  select(country, date, NAME_0, NAME_1, HASC_1, everything())
+  dplyr::select(country, date, NAME_0, NAME_1, HASC_1, everything())
+
+afrob_merge_sf <-
+  afrob_merge_sf %>% 
+  mutate(country = case_when(country == "LIb" ~ "LIB", TRUE ~ country))
 
 save(afrob_merge_sf, file = here::here("processed", "afrob_merge_sf.Rdata"))
 
 
+afrob_merge_sf %>% 
+  group_by(country, round) %>% 
+  summarise(year = min(lubridate::year(Dateintr))) %>% 
+  ggplot() +
+  geom_vline(aes(xintercept = year, color = factor(round)), 
+             alpha = 1, size = 0.5) +
+  facet_wrap(~country)
 

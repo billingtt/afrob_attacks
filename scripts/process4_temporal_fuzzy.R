@@ -136,6 +136,7 @@ afrob_lag12 <- imap(.x = gtd_buffers,
 #                               spatial_window = .y,
 #                               attacks = ifelse(is.na(attacks), 0, attacks)))
 
+
 # Bind each list into one tidy frame; this will throw warnings because of the geometry column
 attacks_buff <- bind_rows(afrob_lag3, 
                           afrob_lag6, 
@@ -161,7 +162,9 @@ afrob_tidy <- afrob_merge_sf %>%
   # filter(!is.na(date) & date != "1582-10-13") %>% 
   # st_drop_geometry() %>% 
   left_join(., attacks_buff, by = c("geoid", "date")) %>% 
-  select(country, date, temporal_window, spatial_window, attacks, everything())
+  dplyr::select(country, date, temporal_window, spatial_window, attacks, everything())
 
 
 save(afrob_tidy, file = here::here("processed", "afrob_tidy.Rdata"))
+
+afrob_sf_buffers[[1]]

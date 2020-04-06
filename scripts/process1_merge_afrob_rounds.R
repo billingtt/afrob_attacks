@@ -46,6 +46,154 @@ r7 <- haven::read_sav(here::here("afrob", "merged_byround_nogeo",
 
 
 
+# Religious ID ------------------------------------------------------------
+
+relgroups <- readxl::read_excel(here::here("religious_id_tidy.xlsx"))
+relgroups$value <- as.numeric(relgroups$value)
+
+# Round 2
+table(r2$q54)
+
+r2 <- 
+  relgroups %>% 
+  filter(round == 2) %>% 
+  group_by(value) %>% 
+  summarise(value_label = first(value_label),
+         denomination = first(denomination), 
+         supragroup = first(supragroup)) %>% 
+  bind_rows(.,tibble(value = -1, 
+                     value_label = "Missing",
+                     denomination = "Other/None",
+                     supragroup = "Other/None")) %>% 
+  right_join(., r2, by = c("value" = "q54"))
+
+
+# Round 3
+table(r3$q91)
+
+r3 <-
+  relgroups %>% 
+  filter(round == 3) %>% 
+  group_by(value) %>% 
+  summarise(value_label = first(value_label),
+            denomination = first(denomination), 
+            supragroup = first(supragroup)) %>% 
+  bind_rows(., tibble(value = -1, 
+                      value_label = "Missing",
+                      denomination = "Other/None",
+                      supragroup = "Other/None")) %>% 
+  right_join(., r3, by = c("value" = "q91"))
+  
+  
+
+# Round 4
+table(r4$Q90)
+
+r4 <-
+  relgroups %>% 
+  filter(round == 4) %>% 
+    # Dutch Reformed to Quaker so it gets matched to Mainline Protestant
+    mutate(value = case_when(value == "Dutch Reformed" ~ 10, TRUE ~ value)) %>% 
+  group_by(value) %>% 
+  summarise(value_label = first(value_label),
+            denomination = first(denomination), 
+            supragroup = first(supragroup)) %>% 
+  bind_rows(., tibble(value = -1, 
+                      value_label = "Missing",
+                      denomination = "Other/None",
+                      supragroup = "Other/None")) %>% 
+  right_join(., r4, by = c("value" = "Q90"))
+
+# Round 5
+
+table(r5$Q98A)
+
+r5 <-
+  relgroups %>% 
+  filter(round == 5) %>% 
+  mutate(supragroup = case_when(supragroup == "Mulim" ~ "Muslim", TRUE ~ supragroup)) %>% 
+  group_by(value) %>% 
+  summarise(value_label = first(value_label),
+            denomination = first(denomination), 
+            supragroup = first(supragroup)) %>% 
+  bind_rows(., tibble(value = -1, 
+                      value_label = "Missing",
+                      denomination = "Other/None",
+                      supragroup = "Other/None")) %>% 
+  right_join(., r5, by = c("value" = "Q98A"))
+
+# Round 6
+
+table(r6$Q98A)
+
+r6 <-
+  relgroups %>% 
+  filter(round == 6) %>% 
+  # mutate(supragroup = case_when(supragroup == "Mulim" ~ "Muslim", TRUE ~ supragroup)) %>% 
+  group_by(value) %>% 
+  summarise(value_label = first(value_label),
+            denomination = first(denomination), 
+            supragroup = first(supragroup)) %>% 
+  bind_rows(., tibble(value = -1, 
+                      value_label = "Missing",
+                      denomination = "Other/None",
+                      supragroup = "Other/None")) %>% 
+  right_join(., r6, by = c("value" = "Q98A"))
+
+
+
+# Round 7
+
+table(r7$Q98)
+
+r7 <-
+  relgroups %>% 
+  filter(round == 7) %>% 
+  # Apostolic Church to Chirstian Zionist so coded as Evangelical
+  # Wad 34, but 34 is also Jewish
+  mutate(value = case_when(denomination == "Apostolic Church" ~ 33, TRUE ~ value)) %>%
+  group_by(value) %>% 
+  summarise(value_label = first(value_label),
+            denomination = first(denomination), 
+            supragroup = first(supragroup)) %>% 
+  bind_rows(., tibble(value = -1, 
+                      value_label = "Missing",
+                      denomination = "Other/None",
+                      supragroup = "Other/None")) %>% 
+  right_join(., r7, by = c("value" = "Q98"))
+
+
+
+
+# Missing
+
+r2 %>% filter(is.na(supragroup)) %>% 
+  group_by(country, value) %>% 
+  tally()
+
+r3 %>% filter(is.na(supragroup)) %>% 
+  group_by(country, value) %>% 
+  tally()
+
+r4 %>% filter(is.na(supragroup)) %>% 
+  group_by(COUNTRY, value) %>% 
+  tally()
+
+r5 %>% filter(is.na(supragroup)) %>% 
+  group_by(value) %>% 
+  tally() %>% arrange(-n)
+
+r6 %>% filter(is.na(supragroup)) %>% 
+  group_by(value) %>% 
+  tally() %>% arrange(value)
+
+
+r7 %>% filter(is.na(supragroup)) %>% 
+  group_by(value) %>% 
+  tally() 
+
+
+
 # Grab and clean extra variables ------------------------------------------
 
 
@@ -82,8 +230,6 @@ table(r6$Q98A)
 
 # r7 Q98A 
 table(r7$Q98A)
-
-
 
 # How important is religion in your life
 # 1-4 (not at all to very)
@@ -396,34 +542,35 @@ keepers <-c("respno_r", "ymd", "rel_important", "rel_attend", "rel_member",
             "rule_oneparty", "rule_military", "rule_oneman", "protest",
             "fear_crime", "feel_unsafe", "PT_trustrel", "neighbor_religion", 
             "neighbor_ethnicity", "neighbor_homosexual", "neighbor_hiv", 
-            "neighbor_foreign", "PT_crptrel")
+            "neighbor_foreign", "PT_crptrel", "value", "value_label",
+            "denomination", "supragroup")
 
 
 
 afrob_bind <- 
   r2 %>% 
-  select(one_of(keepers)) %>% 
+  dplyr::select(one_of(keepers)) %>% 
   mutate(round = "r2") %>% 
   bind_rows(
     
     (r3 %>% 
-       select(one_of(keepers)) %>% 
+       dplyr::select(one_of(keepers)) %>% 
        mutate(round = "r3")),
     
     (r4 %>% 
-       select(one_of(keepers)) %>% 
+       dplyr::select(one_of(keepers)) %>% 
        mutate(round = "r4")),
     
     (r5 %>% 
-       select(one_of(keepers)) %>% 
+       dplyr::select(one_of(keepers)) %>% 
        mutate(round = "r5")),
     
     (r6 %>% 
-       select(one_of(keepers)) %>% 
+       dplyr::select(one_of(keepers)) %>% 
        mutate(round = "r6")),
     
     (r7 %>% 
-       select(one_of(keepers)) %>% 
+       dplyr::select(one_of(keepers)) %>% 
        mutate(round = "r7"))
     
   )
@@ -431,13 +578,24 @@ afrob_bind <-
 
 
 
+
 # Joined with merged geocoded data ----------------------------------------
-readxl::read_excel(here::here("afrob", "afb_r1tor7.xlsx")) %>% 
-  select(-"...1") %>%   
-  mutate(country = substr(respno_r, 1, 3)) %>% 
-  select(country, everything()) %>% 
-  left_join(., afrob_bind) %>% 
+load(here::here("afrob", "afrob_full.Rdata"))
+
+
+afrob_full %>%
+  mutate(country = substr(respno, 1, 3),
+         respno_r = paste(respno, round, sep = "_")) %>%
+  dplyr::select(country, everything()) %>%
+  left_join(., afrob_bind) %>%
   filter(!is.na(ymd)) -> afrob_merge
+  
+readxl::read_excel(here::here("afrob", "afb_r1tor7.xlsx")) %>%
+  select(-"...1") %>%
+  mutate(country = substr(respno_r, 1, 3)) %>%
+  select(country, everything()) %>%
+  left_join(., afrob_bind) %>%
+  filter(!is.na(ymd)) -> afrob_merge2
 
 
 
@@ -486,7 +644,6 @@ afrob_merge <-
   mutate_at(vars(starts_with("neighbor")), ~case_when(. %in% c(1:5) ~ as.numeric(.), TRUE ~ NA_real_)) %>% 
   mutate_at(vars(starts_with("PT_trust")), ~case_when(. %in% c(0:3) ~ as.numeric(.), TRUE ~ NA_real_)) %>% 
   mutate_at(vars(starts_with("PT_crpt")), ~case_when(. %in% c(0:3) ~ as.numeric(.), TRUE ~ NA_real_)) 
-  
 
 
 save(afrob_merge, file = here::here("processed", "afrob_merge.Rdata"))
@@ -494,7 +651,13 @@ save(afrob_merge, file = here::here("processed", "afrob_merge.Rdata"))
 
 
 
-
+afrob_merge %>% 
+  group_by(country, round) %>% 
+  summarise(year = min(lubridate::year(Dateintr))) %>% 
+  ggplot() +
+  geom_vline(aes(xintercept = year, color = factor(round)), 
+             alpha = 1, size = 0.5) +
+  facet_wrap(~country)
 
 
 

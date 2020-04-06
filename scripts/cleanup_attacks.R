@@ -5,8 +5,8 @@ source(here::here("scripts", "funs.R"))
 
 
 # ACLED
-acled <- read_csv(here::here("attacks", "acled_africa.csv"))
-table(acled$event_type)
+# acled <- read_csv(here::here("attacks", "acled_africa.csv"))
+# table(acled$event_type)
 
 
 # GTD ---------------------------------------------------------------------

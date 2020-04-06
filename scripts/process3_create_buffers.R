@@ -28,8 +28,3 @@ afrob_sf_buffers <- map(.x = c(10000, 25000, 50000, 100000),
 
 save(afrob_sf_buffers, file = here::here("processed", "afrob_sf_buffers.Rdata"))
 
-
-
-
-
-
